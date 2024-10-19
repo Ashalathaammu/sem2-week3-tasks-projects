@@ -1,0 +1,207 @@
+1)Creating Collections
+=>CREATE TABLE Employees (
+    EmployeeID VARCHAR(10) PRIMARY KEY,
+    FirstName VARCHAR(50) NOT NULL,
+    LastName VARCHAR(50) NOT NULL,
+    DateOfBirth DATE NOT NULL,
+    Department VARCHAR(50) NOT NULL
+);
+=>CREATE TABLE Orders(
+    OrderID int(10) ,
+    OrderDate DATE,
+    CustomerID varchar(10),
+    Amount Decimal(10),
+    
+);
+
+2) Inserting Data into Collections
+=>INSERT INTO Employees (EmployeeID, FirstName, LastName, DateOfBirth, Department)
+VALUES ('1', 'Alice', 'Johnson', '1990-01-15', 'HR');
+=>INSERT INTO Orders (OrderID, OrderDate, CustomerID, Amount)
+VALUES 
+    (1, '2024-10-01', 'C001', 150.50),
+    (2, '2024-10-02', 'C002', 200.75),
+    (3, '2024-10-03', 'C003', 320.00),
+    (4, '2024-10-04', 'C004', 450.25),
+    (5, '2024-10-05', 'C005', 275.60);
+
+3. Selecting Data from Collections
+=>select*from Employees
+=>select*from Order
+=>select Firstname,Lastname from Employees;
+=>select OrderID,Amount from Orders;
+
+4.Updating Data in a Collection
+=>UPDATE Employees SET Department = 'Finance' WHERE EmployeeID = '1';
+=>UPDATE Orders1 SET Amount = '500.00' WHERE OrderID = '2';
+
+5. Deleting Data from a Collection
+=>DELETE from Employees WHERE EmployeeID=1;
+=>DELETE from Orders WHERE Amount<100;
+
+6. Filtering Data with WHERE Clause
+=>SELECT * FROM Employees WHERE Department = 'HR';
+=>SELECT * FROM Orders WHERE AMOUNT>300;
+
+7. Using AND / OR in Queries
+=>SELECT * FROM Employees WHERE Department = 'HR' AND DateOfBirth > '1990-01-01';
+=>SELECT * FROM Orders1 WHERE Amount > 300 AND OrderDate < '2023-01-01';
+=>SELECT * FROM Employees WHERE Department IN ('HR', 'Finance');
+=>SELECT * FROM Orders WHERE Amount < 100 OR OrderDate > '2023-01-01';
+
+8. Sorting Results with ORDER BY
+=>SELECT * FROM Employees ORDER BY LastName ASC;
+=>SELECT * FROM Orders1 ORDER BY Amount DESC;
+
+9. Using Aggregate Functions
+=>SELECT COUNT(*) AS TotalEmployees FROM Employees;
+=>SELECT COUNT(*) AS TotalOrders FROM Orders;
+=>SELECT AVG(Amount) AS AverageAmount FROM Orders;
+=>SELECT AVG(TIMESTAMPDIFF(YEAR, DateOfBirth, CURDATE())) AS AverageAge FROM Employees;
+
+10. Grouping Data with GROUP BY
+=>SELECT Department, COUNT(*) AS NumberOfEmployees
+FROM Employees
+GROUP BY Department;
+=>SELECT CustomerID, SUM(OrderAmount) AS TotalOrderAmount
+FROM Orders
+GROUP BY CustomerID;
+
+11. Using HAVING Clause
+=>SELECT DepartmentID, COUNT(EmployeeID) AS NumberOfEmployees
+FROM Employees
+GROUP BY DepartmentID
+HAVING COUNT(EmployeeID) > 5;
+=>SELECT CustomerID, SUM(OrderAmount) AS TotalOrderAmount
+FROM Orders
+GROUP BY CustomerID
+HAVING SUM(OrderAmount) > 1000;
+
+12. Joining Collections
+=>SELECT Employees.FirstName, Employees.LastName, Orders.OrderAmount
+FROM Employees
+INNER JOIN Orders ON Employees.CustomerID = Orders.CustomerID;
+=>SELECT Employees.FirstName, Employees.LastName, Orders.OrderAmount
+FROM Employees
+LEFT JOIN Orders ON Employees.CustomerID = Orders.CustomerID;
+
+PROJECT5:HOTEL RESERVATION SYSTEM
+
+Create collections:
+1)Rooms collection
+=>{
+  "_id": "room1", // RoomID
+  "type": "Deluxe",
+  "price": 150.0,
+  "availability": [
+    {
+      "startDate": "2024-10-20",
+      "endDate": "2024-10-25",
+      "status": "available"
+    }
+  ]
+}
+
+2)Guests Collection:
+{
+  "_id": "guest1", // GuestID
+  "name": "John Doe",
+  "contactNumber": "123-456-7890",
+  "email": "john.doe@example.com"
+}
+3)Reservations Collection:
+{
+  "_id": "res1", // ReservationID
+  "roomID": "room1",
+  "guestID": "guest1",
+  "checkInDate": "2024-10-22",
+  "checkOutDate": "2024-10-24",
+  "status": "confirmed"
+}
+4)payments collections:
+{
+  "_id": "pay1", // PaymentID
+  "reservationID": "res1",
+  "amount": 300.0,
+  "paymentDate": "2024-10-21",
+  "status": "paid"
+}
+Task Implementation:
+1)Insert rooms with details like RoomID, Type, Price, and Availability:
+db.rooms.insertOne({
+  _id: "room2",
+  type: "Suite",
+  price: 200.0,
+  availability: [
+    {
+      startDate: "2024-10-26",
+      endDate: "2024-10-30",
+      status: "available"
+    }
+  ]
+});
+b. Query to select all available rooms for a specific date range:
+db.rooms.find({
+  availability: {
+    $elemMatch: {
+      startDate: { $lte: "2024-10-23" },
+      endDate: { $gte: "2024-10-24" },
+      status: "available"
+    }
+  }
+});
+c. Update room availability when a reservation is made:
+db.rooms.updateOne(
+  { _id: "room1", "availability.startDate": "2024-10-20" },
+  { $set: { "availability.$.status": "reserved" } }
+);
+d. Delete reservations that have been canceled:
+db.reservations.deleteOne({ _id: "res1", status: "canceled" });
+e. Filter rooms based on type and price range:
+db.rooms.find({
+  type: "Deluxe",
+  price: { $gte: 100, $lte: 200 }
+});
+f. Use AND/OR to find rooms by type and price range:
+db.rooms.find({
+  $or: [
+    { type: "Suite" },
+    { price: { $lte: 250 } }
+  ]
+});
+
+g. Sort rooms by price in ascending order:
+db.rooms.find().sort({ price: 1 });
+
+h. Use aggregate functions to calculate the total revenue from reservations:
+db.payments.aggregate([
+  {
+    $group: {
+      _id: null,
+      totalRevenue: { $sum: "$amount" }
+    }
+  }
+]);
+i. Group reservations by room type and calculate the total number of reservations for each room type:
+db.reservations.aggregate([
+  {
+    $lookup: {
+      from: "rooms",
+      localField: "roomID",
+      foreignField: "_id",
+      as: "roomDetails"
+    }
+  },
+  {
+    $unwind: "$roomDetails"
+  },
+  {
+    $group: {
+      _id: "$roomDetails.type",
+      totalReservations: { $sum: 1 }
+    }
+  }
+]);
+
+
+
